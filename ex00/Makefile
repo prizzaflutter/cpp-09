@@ -10,7 +10,7 @@ OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
 
-%.o: %.cpp BitcointExchange.hpp
+%.o: %.cpp BitcoinExchange.hpp
 	$(CC) $(FLAGS) -c $< -o $@
 
 $(NAME): $(OBJ)
