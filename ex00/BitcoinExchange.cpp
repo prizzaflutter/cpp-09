@@ -34,7 +34,6 @@ void BitcoinExchange::loadDatabase(const std::string& filename){
         std::getline(ss, rateStr);
 
         float rate = std::atof(rateStr.c_str());
-        // database[date] = rate;
         database.insert(std::pair<std::string,float>(date,rate));
     }
 }
@@ -81,13 +80,15 @@ void BitcoinExchange::processInput(const std::string& filename){
 }
 
 bool BitcoinExchange::isValidDate(const std::string& date) const{
-    if (!std::isdigit(date[0]) || !std::isdigit(date[1]) ||
-    !std::isdigit(date[2]) || !std::isdigit(date[3]))
-    return false;
-
     if (date.length() != 10)
         return false;
-    
+
+    if (!std::isdigit(date[0]) || !std::isdigit(date[1]) ||
+        !std::isdigit(date[2]) || !std::isdigit(date[3]) ||
+        !std::isdigit(date[5]) || !std::isdigit(date[6]) ||
+        !std::isdigit(date[8]) || !std::isdigit(date[9]))
+        return false;
+
     if(date[4] != '-' || date[7] != '-')
         return false;
 
@@ -100,8 +101,15 @@ bool BitcoinExchange::isValidDate(const std::string& date) const{
     
     if (month < 1 || month > 12)
         return false;
+
+    int maxDay = 31;
+
+    if (month == 3 || month == 6 || month == 9 || month == 11)
+        maxDay = 30;
+    else if (month == 2)
+        maxDay = 28;
     
-    if (day < 1 || day > 31)
+    if (day < 1 || day > maxDay)
         return false;
     
     return true;
@@ -116,8 +124,10 @@ bool BitcoinExchange::isValidValue(float value) const{
 float BitcoinExchange::getExchangeRate(const std::string& date) const {
     std::map<std::string, float>::const_iterator it;
     it = database.lower_bound(date);
-    if (it == database.end())
-        return (--it)->second;
+    if (it == database.end()){
+        --it;
+        return it->second;
+    }
     if (it != database.end() && it->first == date)
         return it->second;
     if (it == database.begin())
