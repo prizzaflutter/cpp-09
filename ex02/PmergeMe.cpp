@@ -61,73 +61,181 @@ void PmergeMe::printAfter() const {
     std::cout << std::endl;
 }
 
-void PmergeMe::insertSorted(std::vector<int>& sorted, int value){
-    std::vector<int>::iterator it = sorted.begin();
-    while (it != sorted.end() && *it < value)
-        ++it;
-    sorted.insert(it, value);
+// void PmergeMe::insertSorted(std::vector<int>& sorted, int value){
+//     std::vector<int>::iterator it = sorted.begin();
+//     while (it != sorted.end() && *it < value)
+//         ++it;
+//     sorted.insert(it, value);
+// }
+
+void PmergeMe::binaryInsertVector(std::vector<int>& chain, int value){
+    std::vector<int>::iterator position;
+    position = std::lower_bound(chain.begin(), chain.end(), value);
+    chain.insert(position, value);
 }
 
-std::vector<int> PmergeMe::mergeSortVector(std::vector<int> v){
-    if (v.size() <= 1)
+std::vector<int> PmergeMe::fordJohnsonVector(std::vector<int> v){
+    if(v.size() <= 1)
         return v;
-    std::vector<int> left;
-    std::vector<int> right;
 
-    size_t midle = v.size() / 2;
-    for (size_t i = 0; i < midle; i++)
-        left.push_back(v[i]);
-    for (size_t i = midle; i < v.size(); i++)
-        right.push_back(v[i]);
-    left = mergeSortVector(left);
-    right = mergeSortVector(right);
+    std::vector<std::pair<int, int> > pairs;
+    size_t i = 0;
+    while (i + 1 < v.size()){
+        int a = v[i];
+        int b = v[i + 1];
 
-    std::vector<int> result;
-    for(size_t i = 0; i < left.size(); i++)
-        result.push_back(left[i]);
-    for(size_t i = 0; i < right.size(); i++)
-        insertSorted(result, right[i]);
-    return result;
+        if (a > b)
+            std::swap(a, b);
+        pairs.push_back(std::make_pair(a, b));
+        i += 2;
+    }
+
+    bool hasStraggler = false;
+    int straggler = 0;
+    if (v.size() % 2 != 0){
+        hasStraggler = true;
+        straggler = v.back();
+    }
+
+    std::vector<int> mainChain;
+    std::vector<int> pendingChain;
+
+    for (size_t i = 0; i < pairs.size(); i++){
+        pendingChain.push_back(pairs[i].first);
+        mainChain.push_back(pairs[i].second);
+    }
+    mainChain = fordJohnsonVector(mainChain);
+    if (!pendingChain.empty())
+        binaryInsertVector(mainChain, pendingChain[0]);
+    std::vector<int> order = buildJacobsthalOrderVector(pendingChain.size());
+    for (size_t i = 0; i < order.size(); i++){
+        if(order[i] == 0)
+            continue;
+        binaryInsertVector(mainChain, pendingChain[order[i]]);
+    }
+    if (hasStraggler)
+        binaryInsertVector(mainChain, straggler);
+    return mainChain;
 }
+
+/// how jacobsthal indices generate with this formula : Jn​=Jn−1​+2Jn−2
+
+std::vector<int> PmergeMe::buildJacobsthalOrderVector(size_t size){
+    std::vector<int> order;
+    if (size <= 1)
+        return order;
+    
+    std::vector<int> jac;
+    
+    jac.push_back(0);
+    jac.push_back(1);
+    
+    while(jac.back() < (int)size){
+        int next = jac[jac.size() - 1] + 2 * jac[jac.size() - 2];
+        jac.push_back(next);
+    }
+    std::vector<bool> used(size, false);
+    for (size_t i = 1; i < jac.size(); i++){
+        int index = jac[i];
+        if (index < (int)size && !used[index]){
+            order.push_back(index);
+            used[index] = true;
+        }
+    }
+    for (size_t i = 0; i < size; i++){
+        if (!used[i])
+            order.push_back(i);
+    }
+    return order;
+}
+
 
 void PmergeMe::setVector(){
-    vec = mergeSortVector(vec);
+    vec = fordJohnsonVector(vec);
 }
 
 
-void PmergeMe::insertSortedDeque(std::deque<int>& sorted, int value){
-    std::deque<int>::iterator it = sorted.begin();
-    while(it != sorted.end() && *it < value)
-        ++it;
-    sorted.insert(it, value);
+void PmergeMe::binaryInsertDeque(std::deque<int>& chain, int value){
+    std::deque<int>::iterator position;
+    position = std::lower_bound(chain.begin(), chain.end(), value);
+    chain.insert(position, value);
 }
 
-std::deque<int>  PmergeMe::mergeSortDeque(std::deque<int> d){
-    if (d.size() <= 1)
-        return d;
+std::deque<int> PmergeMe::fordJohnsonDeque(std::deque<int> v){
+    if(v.size() <= 1)
+        return v;
 
-    std::deque<int> left;
-    std::deque<int> right;
+    std::deque<std::pair<int, int> > pairs;
+    size_t i = 0;
+    while (i + 1 < v.size()){
+        int a = v[i];
+        int b = v[i + 1];
 
-    size_t midle = d.size() / 2;
+        if (a > b)
+            std::swap(a, b);
+        pairs.push_back(std::make_pair(a, b));
+        i += 2;
+    }
+
+    bool hasStraggler = false;
+    int straggler = 0;
+    if (v.size() % 2 != 0){
+        hasStraggler = true;
+        straggler = v.back();
+    }
+
+    std::deque<int> mainChain;
+    std::deque<int> pendingChain;
+
+    for (size_t i = 0; i < pairs.size(); i++){
+        pendingChain.push_back(pairs[i].first);
+        mainChain.push_back(pairs[i].second);
+    }
+    mainChain = fordJohnsonDeque(mainChain);
+    if (!pendingChain.empty())
+        binaryInsertDeque(mainChain, pendingChain[0]);
+    std::deque<int> order = buildJacobsthalOrderDeque(pendingChain.size());
+    for (size_t i = 0; i < order.size(); i++){
+        if(order[i] == 0)
+            continue;
+        binaryInsertDeque(mainChain, pendingChain[order[i]]);
+    }
+    if (hasStraggler)
+        binaryInsertDeque(mainChain, straggler);
+    return mainChain;
+}
+
+
+std::deque<int> PmergeMe::buildJacobsthalOrderDeque(size_t size){
+    std::deque<int> order;
+    if (size <= 1)
+        return order;
     
-    for (size_t i = 0; i < midle; i++)
-        left.push_back(d[i]);
+    std::deque<int> jac;
     
-    for (size_t i = midle; i < d.size(); i++)
-        right.push_back(d[i]);
-
-    left = mergeSortDeque(left);
-    right = mergeSortDeque(right);
-
-    std::deque<int> result;
-    for(size_t i = 0; i < left.size(); i++)
-        result.push_back(left[i]);
-    for(size_t i = 0; i < right.size(); i++)
-        insertSortedDeque(result, right[i]);
-    return result;
+    jac.push_back(0);
+    jac.push_back(1);
+    
+    while(jac.back() < (int)size){
+        int next = jac[jac.size() - 1] + 2 * jac[jac.size() - 2];
+        jac.push_back(next);
+    }
+    std::deque<bool> used(size, false);
+    for (size_t i = 1; i < jac.size(); i++){
+        int index = jac[i];
+        if (index < (int)size && !used[index]){
+            order.push_back(index);
+            used[index] = true;
+        }
+    }
+    for (size_t i = 0; i < size; i++){
+        if (!used[i])
+            order.push_back(i);
+    }
+    return order;
 }
+
 
 void PmergeMe::setDeque(){
-    deq = mergeSortDeque(deq);
+    deq = fordJohnsonDeque(deq);
 }

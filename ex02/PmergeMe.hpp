@@ -23,12 +23,14 @@ class PmergeMe {
         void printAfter() const;
 
         void setVector();
-        std::vector<int>  mergeSortVector(std::vector<int> v);
-        void insertSorted(std::vector<int>& sorted, int value);
+        std::vector<int>  fordJohnsonVector(std::vector<int> v);
+        void binaryInsertVector(std::vector<int>& chain, int value);
 
         void setDeque(); 
-        std::deque<int> mergeSortDeque(std::deque<int> d);
-        void insertSortedDeque(std::deque<int>& sorted, int value);
+        std::deque<int> fordJohnsonDeque(std::deque<int> d);
+        void binaryInsertDeque(std::deque<int>& chain, int value);
+        std::vector<int> buildJacobsthalOrderVector(size_t size);
+        std::deque<int> buildJacobsthalOrderDeque(size_t size);
 };
 
 #endif
